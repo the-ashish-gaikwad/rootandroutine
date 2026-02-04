@@ -13,6 +13,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        handwritten: ["'Caveat'", "'Comic Sans MS'", "cursive"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -57,6 +60,22 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Pastel subject colors
+        pastel: {
+          mint: "hsl(var(--pastel-mint))",
+          lavender: "hsl(var(--pastel-lavender))",
+          peach: "hsl(var(--pastel-peach))",
+          pink: "hsl(var(--pastel-pink))",
+          blue: "hsl(var(--pastel-blue))",
+          yellow: "hsl(var(--pastel-yellow))",
+          sage: "hsl(var(--pastel-sage))",
+          coral: "hsl(var(--pastel-coral))",
+        },
+        notebook: {
+          page: "hsl(var(--notebook-page))",
+          line: "hsl(var(--notebook-line))",
+          dot: "hsl(var(--notebook-dot))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -80,10 +99,22 @@ export default {
             height: "0",
           },
         },
+        "pulse-soft": {
+          "0%, 100%": {
+            opacity: "1",
+          },
+          "50%": {
+            opacity: "0.7",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-soft": "pulse-soft 2s ease-in-out infinite",
+      },
+      boxShadow: {
+        notebook: "var(--notebook-shadow)",
       },
     },
   },
