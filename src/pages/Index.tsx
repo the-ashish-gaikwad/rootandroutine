@@ -4,7 +4,6 @@ import { useStudyData } from '@/hooks/useStudyData';
 import { useTimer } from '@/hooks/useTimer';
 import { useToast } from '@/hooks/use-toast';
 import { ChartView, BarMode } from '@/types/study';
-
 import { StudyChart } from '@/components/StudyChart';
 import { StatsCards } from '@/components/StatsCards';
 import { StudyTimer } from '@/components/StudyTimer';
@@ -12,11 +11,11 @@ import { ManualEntry } from '@/components/ManualEntry';
 import { SubjectManager } from '@/components/SubjectManager';
 import { SessionHistory } from '@/components/SessionHistory';
 import { ChartControls } from '@/components/ChartControls';
-
 import { BookOpen } from 'lucide-react';
-
 const Index = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const {
     subjects,
     sessions,
@@ -28,9 +27,8 @@ const Index = () => {
     deleteSession,
     exportData,
     clearAllData,
-    getNextColor,
+    getNextColor
   } = useStudyData();
-
   const timer = useTimer();
 
   // Chart state
@@ -38,16 +36,14 @@ const Index = () => {
   const [barMode, setBarMode] = useState<BarMode>('stacked');
 
   // Timer subject selection (before starting)
-  const [timerSubjectId, setTimerSubjectId] = useState<string | null>(
-    subjects[0]?.id || null
-  );
+  const [timerSubjectId, setTimerSubjectId] = useState<string | null>(subjects[0]?.id || null);
 
   // Handle timer start
   const handleTimerStart = (subjectId: string) => {
     timer.start(subjectId);
     toast({
       title: 'Timer started',
-      description: `Studying ${subjects.find((s) => s.id === subjectId)?.name}`,
+      description: `Studying ${subjects.find(s => s.id === subjectId)?.name}`
     });
   };
 
@@ -59,32 +55,36 @@ const Index = () => {
       addSession({
         subjectId: result.subjectId,
         date: today,
-        duration: result.duration,
+        duration: result.duration
       });
-      
-      const subject = subjects.find((s) => s.id === result.subjectId);
+      const subject = subjects.find(s => s.id === result.subjectId);
       toast({
         title: 'Session saved!',
-        description: `${subject?.name}: ${result.duration} minutes logged`,
+        description: `${subject?.name}: ${result.duration} minutes logged`
       });
     }
   };
 
   // Handle manual session entry
   const handleAddManualSession = (subjectId: string, date: string, duration: number) => {
-    addSession({ subjectId, date, duration });
-    
-    const subject = subjects.find((s) => s.id === subjectId);
+    addSession({
+      subjectId,
+      date,
+      duration
+    });
+    const subject = subjects.find(s => s.id === subjectId);
     toast({
       title: 'Session added!',
-      description: `${subject?.name}: ${duration} minutes on ${format(new Date(date), 'MMM d')}`,
+      description: `${subject?.name}: ${duration} minutes on ${format(new Date(date), 'MMM d')}`
     });
   };
 
   // Handle data export
   const handleExport = () => {
     const data = exportData();
-    const blob = new Blob([data], { type: 'application/json' });
+    const blob = new Blob([data], {
+      type: 'application/json'
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -93,10 +93,9 @@ const Index = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
     toast({
       title: 'Data exported!',
-      description: 'Your study data has been downloaded as JSON.',
+      description: 'Your study data has been downloaded as JSON.'
     });
   };
 
@@ -105,7 +104,7 @@ const Index = () => {
     clearAllData();
     toast({
       title: 'Data cleared',
-      description: 'All subjects and sessions have been deleted.',
+      description: 'All subjects and sessions have been deleted.'
     });
   };
 
@@ -114,37 +113,23 @@ const Index = () => {
     addSubject(name, color);
     toast({
       title: 'Subject added!',
-      description: `"${name}" is ready to track.`,
+      description: `"${name}" is ready to track.`
     });
   };
 
   // Handle deleting a subject
   const handleDeleteSubject = (id: string) => {
-    const subject = subjects.find((s) => s.id === id);
+    const subject = subjects.find(s => s.id === id);
     deleteSubject(id);
     toast({
       title: 'Subject deleted',
-      description: `"${subject?.name}" and its sessions have been removed.`,
+      description: `"${subject?.name}" and its sessions have been removed.`
     });
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <BookOpen className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-handwritten font-bold">Study Tracker</h1>
-              <p className="text-sm text-muted-foreground">
-                Track your study sessions, build habits
-              </p>
-            </div>
-          </div>
-        </div>
+        
       </header>
 
       {/* Main content */}
@@ -154,62 +139,26 @@ const Index = () => {
 
         {/* Chart section */}
         <div className="space-y-4">
-          <ChartControls
-            view={chartView}
-            mode={barMode}
-            onViewChange={setChartView}
-            onModeChange={setBarMode}
-          />
-          <StudyChart
-            sessions={sessions}
-            subjects={subjects}
-            view={chartView}
-            mode={barMode}
-          />
+          <ChartControls view={chartView} mode={barMode} onViewChange={setChartView} onModeChange={setBarMode} />
+          <StudyChart sessions={sessions} subjects={subjects} view={chartView} mode={barMode} />
         </div>
 
         {/* Controls grid */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left column - Timer and Manual Entry */}
           <div className="space-y-6">
-            <StudyTimer
-              subjects={subjects}
-              isRunning={timer.isRunning}
-              isPaused={timer.isPaused}
-              elapsedTime={timer.elapsedTime}
-              selectedSubjectId={timer.subjectId || timerSubjectId}
-              onStart={handleTimerStart}
-              onPause={timer.pause}
-              onResume={timer.resume}
-              onStop={handleTimerStop}
-              onSubjectSelect={setTimerSubjectId}
-            />
-            <ManualEntry
-              subjects={subjects}
-              onAddSession={handleAddManualSession}
-            />
+            <StudyTimer subjects={subjects} isRunning={timer.isRunning} isPaused={timer.isPaused} elapsedTime={timer.elapsedTime} selectedSubjectId={timer.subjectId || timerSubjectId} onStart={handleTimerStart} onPause={timer.pause} onResume={timer.resume} onStop={handleTimerStop} onSubjectSelect={setTimerSubjectId} />
+            <ManualEntry subjects={subjects} onAddSession={handleAddManualSession} />
           </div>
 
           {/* Middle column - Subject Manager */}
           <div>
-            <SubjectManager
-              subjects={subjects}
-              onAddSubject={handleAddSubject}
-              onUpdateSubject={updateSubject}
-              onDeleteSubject={handleDeleteSubject}
-              getNextColor={getNextColor}
-            />
+            <SubjectManager subjects={subjects} onAddSubject={handleAddSubject} onUpdateSubject={updateSubject} onDeleteSubject={handleDeleteSubject} getNextColor={getNextColor} />
           </div>
 
           {/* Right column - Session History */}
           <div>
-            <SessionHistory
-              sessions={sessions}
-              subjects={subjects}
-              onDeleteSession={deleteSession}
-              onExportData={handleExport}
-              onClearAllData={handleClearAll}
-            />
+            <SessionHistory sessions={sessions} subjects={subjects} onDeleteSession={deleteSession} onExportData={handleExport} onClearAllData={handleClearAll} />
           </div>
         </div>
       </main>
@@ -220,8 +169,6 @@ const Index = () => {
           <p>Your data is stored locally in your browser. No account needed.</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
