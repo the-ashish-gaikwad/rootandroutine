@@ -9,9 +9,20 @@ import { StatsCards } from '@/components/StatsCards';
 import { StudyTimer } from '@/components/StudyTimer';
 import { ManualEntry } from '@/components/ManualEntry';
 import { SubjectManager } from '@/components/SubjectManager';
-import { SessionHistory } from '@/components/SessionHistory';
 import { ChartControls } from '@/components/ChartControls';
-import { BookOpen } from 'lucide-react';
+ import { Button } from '@/components/ui/button';
+ import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+   AlertDialogTrigger,
+ } from '@/components/ui/alert-dialog';
+ import { Download, Trash2 } from 'lucide-react';
 const Index = () => {
   const {
     toast
@@ -127,11 +138,6 @@ const Index = () => {
     });
   };
   return <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        
-      </header>
-
       {/* Main content */}
       <main className="container max-w-7xl mx-auto px-4 py-6 space-y-6">
         {/* Stats row */}
@@ -143,22 +149,54 @@ const Index = () => {
           <StudyChart sessions={sessions} subjects={subjects} view={chartView} mode={barMode} />
         </div>
 
+         {/* Data actions */}
+         <div className="flex justify-center gap-3">
+           <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
+             <Download className="w-4 h-4" />
+             Export
+           </Button>
+           <AlertDialog>
+             <AlertDialogTrigger asChild>
+               <Button variant="outline" size="sm" className="gap-2 text-destructive hover:text-destructive">
+                 <Trash2 className="w-4 h-4" />
+                 Clear All
+               </Button>
+             </AlertDialogTrigger>
+             <AlertDialogContent>
+               <AlertDialogHeader>
+                 <AlertDialogTitle>Clear all data?</AlertDialogTitle>
+                 <AlertDialogDescription>
+                   This will permanently delete all your subjects and study sessions.
+                   This action cannot be undone.
+                 </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+                 <AlertDialogCancel>Cancel</AlertDialogCancel>
+                 <AlertDialogAction
+                   onClick={handleClearAll}
+                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                 >
+                   Clear All
+                 </AlertDialogAction>
+               </AlertDialogFooter>
+             </AlertDialogContent>
+           </AlertDialog>
+         </div>
+
         {/* Controls grid */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left column - Timer and Manual Entry */}
+         <div className="grid sm:grid-cols-2 gap-6">
+           {/* Left column - Timer, Manual Entry, and Subjects on mobile */}
           <div className="space-y-6">
             <StudyTimer subjects={subjects} isRunning={timer.isRunning} isPaused={timer.isPaused} elapsedTime={timer.elapsedTime} selectedSubjectId={timer.subjectId || timerSubjectId} onStart={handleTimerStart} onPause={timer.pause} onResume={timer.resume} onStop={handleTimerStop} onSubjectSelect={setTimerSubjectId} />
             <ManualEntry subjects={subjects} onAddSession={handleAddManualSession} />
+             <div className="sm:hidden">
+               <SubjectManager subjects={subjects} onAddSubject={handleAddSubject} onUpdateSubject={updateSubject} onDeleteSubject={handleDeleteSubject} getNextColor={getNextColor} />
+             </div>
           </div>
 
-          {/* Middle column - Subject Manager */}
-          <div>
+           {/* Right column - Subject Manager (hidden on mobile, shown above) */}
+           <div className="hidden sm:block">
             <SubjectManager subjects={subjects} onAddSubject={handleAddSubject} onUpdateSubject={updateSubject} onDeleteSubject={handleDeleteSubject} getNextColor={getNextColor} />
-          </div>
-
-          {/* Right column - Session History */}
-          <div>
-            <SessionHistory sessions={sessions} subjects={subjects} onDeleteSession={deleteSession} onExportData={handleExport} onClearAllData={handleClearAll} />
           </div>
         </div>
       </main>

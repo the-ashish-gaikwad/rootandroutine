@@ -19,17 +19,17 @@ export function ChartControls({
   onModeChange,
 }: ChartControlsProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
       {/* View toggle */}
       <Tabs value={view} onValueChange={(v) => onViewChange(v as ChartView)}>
         <TabsList className="bg-muted/70">
-          <TabsTrigger value="daily" className="text-sm">
+           <TabsTrigger value="daily" className="text-xs sm:text-sm px-2 sm:px-3">
             Daily
           </TabsTrigger>
-          <TabsTrigger value="weekly" className="text-sm">
+           <TabsTrigger value="weekly" className="text-xs sm:text-sm px-2 sm:px-3">
             Weekly
           </TabsTrigger>
-          <TabsTrigger value="monthly" className="text-sm">
+           <TabsTrigger value="monthly" className="text-xs sm:text-sm px-2 sm:px-3">
             Monthly
           </TabsTrigger>
         </TabsList>
@@ -42,24 +42,24 @@ export function ChartControls({
           size="sm"
           onClick={() => onModeChange('simple')}
           className={cn(
-            'gap-1.5 text-sm',
+             'gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3',
             mode === 'simple' && 'bg-background shadow-sm'
           )}
         >
           <BarChart2 className="w-4 h-4" />
-          Simple
+           <span className="hidden xs:inline">Simple</span>
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onModeChange('stacked')}
           className={cn(
-            'gap-1.5 text-sm',
+             'gap-1 sm:gap-1.5 text-xs sm:text-sm px-2 sm:px-3',
             mode === 'stacked' && 'bg-background shadow-sm'
           )}
         >
           <Layers className="w-4 h-4" />
-          Stacked
+           <span className="hidden xs:inline">Stacked</span>
         </Button>
       </div>
     </div>
