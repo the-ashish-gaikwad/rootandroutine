@@ -10,6 +10,7 @@ import { StudyTimer } from '@/components/StudyTimer';
 import { ManualEntry } from '@/components/ManualEntry';
 import { SubjectManager } from '@/components/SubjectManager';
 import { ChartControls } from '@/components/ChartControls';
+ import { RecentSessions } from '@/components/RecentSessions';
  import { Button } from '@/components/ui/button';
  import {
    AlertDialog,
@@ -137,6 +138,15 @@ const Index = () => {
       description: `"${subject?.name}" and its sessions have been removed.`
     });
   };
+
+  // Handle deleting a session
+  const handleDeleteSession = (id: string) => {
+    deleteSession(id);
+    toast({
+      title: 'Session deleted',
+      description: 'The study session has been removed.'
+    });
+  };
   return <div className="min-h-screen bg-background">
       {/* Main content */}
       <main className="container max-w-7xl mx-auto px-4 py-6 space-y-6">
@@ -149,46 +159,13 @@ const Index = () => {
           <StudyChart sessions={sessions} subjects={subjects} view={chartView} mode={barMode} />
         </div>
 
-         {/* Data actions */}
-         <div className="flex justify-center gap-3">
-           <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
-             <Download className="w-4 h-4" />
-             Export
-           </Button>
-           <AlertDialog>
-             <AlertDialogTrigger asChild>
-               <Button variant="outline" size="sm" className="gap-2 text-destructive hover:text-destructive">
-                 <Trash2 className="w-4 h-4" />
-                 Clear All
-               </Button>
-             </AlertDialogTrigger>
-             <AlertDialogContent>
-               <AlertDialogHeader>
-                 <AlertDialogTitle>Clear all data?</AlertDialogTitle>
-                 <AlertDialogDescription>
-                   This will permanently delete all your subjects and study sessions.
-                   This action cannot be undone.
-                 </AlertDialogDescription>
-               </AlertDialogHeader>
-               <AlertDialogFooter>
-                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                 <AlertDialogAction
-                   onClick={handleClearAll}
-                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                 >
-                   Clear All
-                 </AlertDialogAction>
-               </AlertDialogFooter>
-             </AlertDialogContent>
-           </AlertDialog>
-         </div>
-
         {/* Controls grid */}
          <div className="grid sm:grid-cols-2 gap-6">
            {/* Left column - Timer, Manual Entry, and Subjects on mobile */}
           <div className="space-y-6">
             <StudyTimer subjects={subjects} isRunning={timer.isRunning} isPaused={timer.isPaused} elapsedTime={timer.elapsedTime} selectedSubjectId={timer.subjectId || timerSubjectId} onStart={handleTimerStart} onPause={timer.pause} onResume={timer.resume} onStop={handleTimerStop} onSubjectSelect={setTimerSubjectId} />
             <ManualEntry subjects={subjects} onAddSession={handleAddManualSession} />
+            <RecentSessions sessions={sessions} subjects={subjects} onDeleteSession={handleDeleteSession} />
              <div className="sm:hidden">
                <SubjectManager subjects={subjects} onAddSubject={handleAddSubject} onUpdateSubject={updateSubject} onDeleteSubject={handleDeleteSubject} getNextColor={getNextColor} />
              </div>
@@ -203,8 +180,40 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border/50 mt-12 py-6">
-        <div className="container max-w-7xl mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>Your data is stored locally in your browser. No account needed.</p>
+        <div className="container max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>Your data is stored locally in your browser.</p>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={handleExport} className="gap-1.5 h-8 text-muted-foreground hover:text-foreground">
+              <Download className="w-3.5 h-3.5" />
+              Export
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5 h-8 text-muted-foreground hover:text-destructive">
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Clear All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear all data?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all your subjects and study sessions.
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleClearAll}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Clear All
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </footer>
     </div>;

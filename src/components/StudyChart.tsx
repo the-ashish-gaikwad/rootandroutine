@@ -220,7 +220,7 @@ export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) 
         </BarChart>
       </ResponsiveContainer>
       
-      {mode === 'stacked' && subjects.length > 0 && (
+      {subjects.length > 0 && (
          <div className="flex flex-wrap gap-2 sm:gap-3 mt-2 sm:mt-4 justify-center">
           {subjects.map((subject) => (
              <div key={subject.id} className="flex items-center gap-1.5 text-xs sm:text-sm">
