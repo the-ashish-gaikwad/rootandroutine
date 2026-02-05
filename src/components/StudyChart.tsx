@@ -153,12 +153,12 @@ export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) 
   };
 
   return (
-    <div className="w-full h-[400px] notebook-paper rounded-lg p-4">
+     <div className="w-full h-[280px] sm:h-[350px] lg:h-[400px] notebook-paper rounded-lg p-2 sm:p-4">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={chartData}
           layout="vertical"
-          margin={{ top: 10, right: 60, left: 30, bottom: 10 }}
+           margin={{ top: 10, right: 40, left: 25, bottom: 10 }}
         >
           <XAxis
             type="number"
@@ -166,15 +166,15 @@ export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) 
             tickFormatter={(v) => `${v}h`}
             axisLine={{ stroke: 'hsl(var(--border))' }}
             tickLine={{ stroke: 'hsl(var(--border))' }}
-            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
           />
           <YAxis
             type="category"
             dataKey="label"
             axisLine={{ stroke: 'hsl(var(--border))' }}
             tickLine={false}
-            tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }}
-            width={40}
+             tick={{ fill: 'hsl(var(--foreground))', fontSize: 10 }}
+             width={30}
           />
           <Tooltip
             formatter={(value: number, name: string) => {
@@ -221,11 +221,11 @@ export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) 
       </ResponsiveContainer>
       
       {mode === 'stacked' && subjects.length > 0 && (
-        <div className="flex flex-wrap gap-3 mt-4 justify-center">
+         <div className="flex flex-wrap gap-2 sm:gap-3 mt-2 sm:mt-4 justify-center">
           {subjects.map((subject) => (
-            <div key={subject.id} className="flex items-center gap-2 text-sm">
+             <div key={subject.id} className="flex items-center gap-1.5 text-xs sm:text-sm">
               <div
-                className="w-3 h-3 rounded-full"
+                 className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full"
                 style={{ backgroundColor: colorToHex[subject.color] }}
               />
               <span className="text-muted-foreground">{subject.name}</span>
