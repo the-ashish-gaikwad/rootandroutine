@@ -15,7 +15,6 @@ import {
   eachDayOfInterval, 
   startOfWeek, 
   endOfWeek,
-  subMonths,
   format,
   parseISO,
   getDate,
@@ -33,7 +32,8 @@ interface StudyChartProps {
 interface ChartDataPoint {
   label: string;
   total: number;
-  [key: string]: number | string;
+  isEmpty?: boolean;
+  [key: string]: number | string | boolean | undefined;
 }
 
 export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) {
@@ -102,13 +102,32 @@ export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) 
         return point;
       });
     } else {
-      // Monthly - last 12 months
-      const months = Array.from({ length: 12 }, (_, i) => subMonths(now, 11 - i));
+      // Monthly - Current calendar year (Jan-Dec)
+      const currentYear = now.getFullYear();
+      
+      // Find user's first session date to filter out months before they started
+      const firstSessionDate = sessions.length > 0
+        ? sessions.reduce((earliest, s) => {
+            const sessionDate = parseISO(s.date);
+            return sessionDate < earliest ? sessionDate : earliest;
+          }, parseISO(sessions[0].date))
+        : now;
+      
+      // Generate all 12 months of current year
+      const months = Array.from({ length: 12 }, (_, i) => {
+        return new Date(currentYear, i, 1);
+      });
 
       dataPoints = months.map((month) => {
         const monthLabel = format(month, 'MMM');
         const monthStart = startOfMonth(month);
         const monthEnd = endOfMonth(month);
+        
+        // Check if this month is before user started tracking
+        const isBeforeUserStart = monthEnd < startOfMonth(firstSessionDate);
+        
+        // Check if this month is in the future
+        const isInFuture = monthStart > now;
 
         const monthSessions = sessions.filter((s) => {
           const sessionDate = parseISO(s.date);
@@ -118,6 +137,7 @@ export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) 
         const point: ChartDataPoint = {
           label: monthLabel,
           total: 0,
+          isEmpty: isBeforeUserStart || isInFuture, // Mark empty states
         };
 
         if (mode === 'stacked') {
