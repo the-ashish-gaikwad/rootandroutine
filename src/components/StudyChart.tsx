@@ -240,19 +240,30 @@ export function StudyChart({ sessions, subjects, view, mode }: StudyChartProps) 
         </BarChart>
       </ResponsiveContainer>
       
-      {subjects.length > 0 && (
-         <div className="flex flex-wrap gap-2 sm:gap-3 mt-2 sm:mt-4 justify-center">
-          {subjects.map((subject) => (
-             <div key={subject.id} className="flex items-center gap-1.5 text-xs sm:text-sm">
-              <div
-                 className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full"
-                style={{ backgroundColor: colorToHex[subject.color] }}
-              />
-              <span className="text-muted-foreground">{subject.name}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      {subjects.length > 0 && (() => {
+        const showLabels = subjects.length <= 5;
+        return (
+          <div className="flex flex-wrap gap-3 sm:gap-4 mt-3 sm:mt-4 justify-center px-4">
+            {subjects.map((subject) => (
+              <div 
+                key={subject.id} 
+                className="flex items-center gap-1.5"
+                title={subject.name}
+              >
+                <div
+                  className="w-3 h-3 rounded-full shrink-0"
+                  style={{ backgroundColor: colorToHex[subject.color] }}
+                />
+                {showLabels && (
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    {subject.name}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }
