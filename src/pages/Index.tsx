@@ -3,6 +3,8 @@ import { format } from 'date-fns';
 import { useStudyData } from '@/hooks/useStudyData';
 import { useTimer } from '@/hooks/useTimer';
 import { useToast } from '@/hooks/use-toast';
+import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { usePWAUpdate } from '@/hooks/usePWAUpdate';
 import { ChartView, BarMode } from '@/types/study';
 import { StudyChart } from '@/components/StudyChart';
 import { StatsCards } from '@/components/StatsCards';
@@ -23,7 +25,7 @@ import { ChartControls } from '@/components/ChartControls';
    AlertDialogTitle,
    AlertDialogTrigger,
  } from '@/components/ui/alert-dialog';
- import { Download, Trash2 } from 'lucide-react';
+ import { Download, Trash2, Smartphone } from 'lucide-react';
 
 const Index = () => {
   const {
@@ -43,6 +45,8 @@ const Index = () => {
     getNextColor
   } = useStudyData();
   const timer = useTimer();
+  const { canInstall, install } = usePWAInstall();
+  usePWAUpdate();
 
   // Chart state
   const [chartView, setChartView] = useState<ChartView>('daily');
@@ -184,6 +188,12 @@ const Index = () => {
         <div className="container max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>Your data is stored locally in your browser.</p>
           <div className="flex gap-2">
+            {canInstall && (
+              <Button variant="ghost" size="sm" onClick={install} className="gap-1.5 h-8 text-muted-foreground hover:text-foreground">
+                <Smartphone className="w-3.5 h-3.5" />
+                Install App
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={handleExport} className="gap-1.5 h-8 text-muted-foreground hover:text-foreground">
               <Download className="w-3.5 h-3.5" />
               Export
