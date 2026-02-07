@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { useLocalStorage } from './useLocalStorage';
+import { useCompressedStorage } from './useCompressedStorage';
 import {
   Subject,
   StudySession,
@@ -26,8 +26,8 @@ const STORAGE_KEYS = {
 };
 
 export function useStudyData() {
-  const [subjects, setSubjects] = useLocalStorage<Subject[]>(STORAGE_KEYS.subjects, []);
-  const [sessions, setSessions] = useLocalStorage<StudySession[]>(STORAGE_KEYS.sessions, []);
+  const [subjects, setSubjects] = useCompressedStorage<Subject[]>(STORAGE_KEYS.subjects, []);
+  const [sessions, setSessions] = useCompressedStorage<StudySession[]>(STORAGE_KEYS.sessions, []);
 
   // Get the next available color for a new subject
   const getNextColor = useCallback((): PastelColor => {
