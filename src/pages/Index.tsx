@@ -24,6 +24,7 @@ import { ChartControls } from '@/components/ChartControls';
    AlertDialogTrigger,
  } from '@/components/ui/alert-dialog';
  import { Download, Trash2 } from 'lucide-react';
+
 const Index = () => {
   const {
     toast
