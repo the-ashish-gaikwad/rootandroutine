@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TimerState } from '@/types/study';
 
+const STORAGE_KEY = 'study-timer-state';
+
 const INITIAL_STATE: TimerState = {
   isRunning: false,
   isPaused: false,
@@ -10,12 +12,99 @@ const INITIAL_STATE: TimerState = {
   elapsedTime: 0,
 };
 
-export function useTimer() {
-  const [state, setState] = useState<TimerState>(INITIAL_STATE);
-  const intervalRef = useRef<number | null>(null);
-  const pauseStartRef = useRef<number | null>(null);
+interface PersistedTimerState {
+  isRunning: boolean;
+  isPaused: boolean;
+  subjectId: string | null;
+  startTime: number | null;
+  pausedTime: number;
+  pauseTimestamp: number | null; // when pause began
+}
 
-  // Update elapsed time every second when running
+function saveState(state: TimerState, pauseTimestamp: number | null) {
+  const persisted: PersistedTimerState = {
+    isRunning: state.isRunning,
+    isPaused: state.isPaused,
+    subjectId: state.subjectId,
+    startTime: state.startTime,
+    pausedTime: state.pausedTime,
+    pauseTimestamp,
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
+  } catch { /* ignore */ }
+}
+
+function clearSavedState() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch { /* ignore */ }
+}
+
+function loadState(): { state: TimerState; pauseTimestamp: number | null } | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const persisted: PersistedTimerState = JSON.parse(raw);
+    if (!persisted.isRunning || !persisted.startTime) return null;
+
+    const now = Date.now();
+
+    if (persisted.isPaused && persisted.pauseTimestamp) {
+      // Was paused — elapsed stays frozen at the moment of pause
+      const elapsed = persisted.pauseTimestamp - persisted.startTime - persisted.pausedTime;
+      return {
+        state: {
+          isRunning: true,
+          isPaused: true,
+          subjectId: persisted.subjectId,
+          startTime: persisted.startTime,
+          pausedTime: persisted.pausedTime,
+          elapsedTime: Math.max(0, elapsed),
+        },
+        pauseTimestamp: persisted.pauseTimestamp,
+      };
+    }
+
+    // Was running — recalculate elapsed including time away
+    const elapsed = now - persisted.startTime - persisted.pausedTime;
+    return {
+      state: {
+        isRunning: true,
+        isPaused: false,
+        subjectId: persisted.subjectId,
+        startTime: persisted.startTime,
+        pausedTime: persisted.pausedTime,
+        elapsedTime: Math.max(0, elapsed),
+      },
+      pauseTimestamp: null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function useTimer() {
+  const [state, setState] = useState<TimerState>(() => {
+    const loaded = loadState();
+    return loaded ? loaded.state : INITIAL_STATE;
+  });
+  const intervalRef = useRef<number | null>(null);
+  const pauseStartRef = useRef<number | null>(
+    (() => {
+      const loaded = loadState();
+      return loaded ? loaded.pauseTimestamp : null;
+    })()
+  );
+
+  // Persist on every state change
+  useEffect(() => {
+    if (state.isRunning) {
+      saveState(state, pauseStartRef.current);
+    }
+  }, [state]);
+
+  // Update elapsed time every 100ms when running
   useEffect(() => {
     if (state.isRunning && !state.isPaused && state.startTime) {
       intervalRef.current = window.setInterval(() => {
@@ -33,21 +122,28 @@ export function useTimer() {
   }, [state.isRunning, state.isPaused, state.startTime, state.pausedTime]);
 
   const start = useCallback((subjectId: string) => {
-    setState({
+    const newState: TimerState = {
       isRunning: true,
       isPaused: false,
       subjectId,
       startTime: Date.now(),
       pausedTime: 0,
       elapsedTime: 0,
-    });
+    };
+    pauseStartRef.current = null;
+    setState(newState);
+    saveState(newState, null);
   }, []);
 
   const pause = useCallback(() => {
     if (!state.isRunning || state.isPaused) return;
     
     pauseStartRef.current = Date.now();
-    setState((prev) => ({ ...prev, isPaused: true }));
+    setState((prev) => {
+      const next = { ...prev, isPaused: true };
+      saveState(next, pauseStartRef.current);
+      return next;
+    });
   }, [state.isRunning, state.isPaused]);
 
   const resume = useCallback(() => {
@@ -58,36 +154,37 @@ export function useTimer() {
       : 0;
     
     pauseStartRef.current = null;
-    setState((prev) => ({
-      ...prev,
-      isPaused: false,
-      pausedTime: prev.pausedTime + pauseDuration,
-    }));
+    setState((prev) => {
+      const next = {
+        ...prev,
+        isPaused: false,
+        pausedTime: prev.pausedTime + pauseDuration,
+      };
+      saveState(next, null);
+      return next;
+    });
   }, [state.isRunning, state.isPaused]);
 
   const stop = useCallback((): { subjectId: string; duration: number } | null => {
     if (!state.isRunning || !state.subjectId) return null;
     
-    // Calculate final duration in minutes
     let finalElapsed = state.elapsedTime;
     
-    // If currently paused, don't count the current pause duration
     if (state.isPaused && pauseStartRef.current) {
-      // elapsedTime was frozen at pause, use it as-is
+      // elapsedTime was frozen at pause, use as-is
     } else if (state.startTime) {
-      // Calculate fresh if still running
       finalElapsed = Date.now() - state.startTime - state.pausedTime;
     }
     
-    const durationMinutes = Math.max(1, Math.round(finalElapsed / 60000)); // At least 1 minute
+    const durationMinutes = Math.max(1, Math.round(finalElapsed / 60000));
     const result = {
       subjectId: state.subjectId,
       duration: durationMinutes,
     };
 
-    // Reset state
     setState(INITIAL_STATE);
     pauseStartRef.current = null;
+    clearSavedState();
     
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -100,6 +197,7 @@ export function useTimer() {
   const reset = useCallback(() => {
     setState(INITIAL_STATE);
     pauseStartRef.current = null;
+    clearSavedState();
     
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
