@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { TimerState } from '@/types/study';
+import { compressToUTF16, decompressFromUTF16 } from 'lz-string';
+import { db } from '@/lib/db';
 
 const STORAGE_KEY = 'study-timer-state';
 
@@ -18,7 +20,7 @@ interface PersistedTimerState {
   subjectId: string | null;
   startTime: number | null;
   pausedTime: number;
-  pauseTimestamp: number | null; // when pause began
+  pauseTimestamp: number | null;
 }
 
 function saveState(state: TimerState, pauseTimestamp: number | null) {
@@ -31,71 +33,81 @@ function saveState(state: TimerState, pauseTimestamp: number | null) {
     pauseTimestamp,
   };
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
+    const compressed = compressToUTF16(JSON.stringify(persisted));
+    db.compressed
+      .put({ key: STORAGE_KEY, value: compressed, updatedAt: Date.now() })
+      .catch(() => { /* ignore */ });
   } catch { /* ignore */ }
 }
 
 function clearSavedState() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch { /* ignore */ }
+  db.compressed.delete(STORAGE_KEY).catch(() => { /* ignore */ });
 }
 
-function loadState(): { state: TimerState; pauseTimestamp: number | null } | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const persisted: PersistedTimerState = JSON.parse(raw);
-    if (!persisted.isRunning || !persisted.startTime) return null;
+function resolvePersistedState(
+  persisted: PersistedTimerState
+): { state: TimerState; pauseTimestamp: number | null } | null {
+  if (!persisted.isRunning || !persisted.startTime) return null;
 
-    const now = Date.now();
+  const now = Date.now();
 
-    if (persisted.isPaused && persisted.pauseTimestamp) {
-      // Was paused — elapsed stays frozen at the moment of pause
-      const elapsed = persisted.pauseTimestamp - persisted.startTime - persisted.pausedTime;
-      return {
-        state: {
-          isRunning: true,
-          isPaused: true,
-          subjectId: persisted.subjectId,
-          startTime: persisted.startTime,
-          pausedTime: persisted.pausedTime,
-          elapsedTime: Math.max(0, elapsed),
-        },
-        pauseTimestamp: persisted.pauseTimestamp,
-      };
-    }
-
-    // Was running — recalculate elapsed including time away
-    const elapsed = now - persisted.startTime - persisted.pausedTime;
+  if (persisted.isPaused && persisted.pauseTimestamp) {
+    const elapsed = persisted.pauseTimestamp - persisted.startTime - persisted.pausedTime;
     return {
       state: {
         isRunning: true,
-        isPaused: false,
+        isPaused: true,
         subjectId: persisted.subjectId,
         startTime: persisted.startTime,
         pausedTime: persisted.pausedTime,
         elapsedTime: Math.max(0, elapsed),
       },
-      pauseTimestamp: null,
+      pauseTimestamp: persisted.pauseTimestamp,
     };
-  } catch {
-    return null;
   }
+
+  const elapsed = now - persisted.startTime - persisted.pausedTime;
+  return {
+    state: {
+      isRunning: true,
+      isPaused: false,
+      subjectId: persisted.subjectId,
+      startTime: persisted.startTime,
+      pausedTime: persisted.pausedTime,
+      elapsedTime: Math.max(0, elapsed),
+    },
+    pauseTimestamp: null,
+  };
 }
 
 export function useTimer() {
-  const [state, setState] = useState<TimerState>(() => {
-    const loaded = loadState();
-    return loaded ? loaded.state : INITIAL_STATE;
-  });
+  const [state, setState] = useState<TimerState>(INITIAL_STATE);
   const intervalRef = useRef<number | null>(null);
-  const pauseStartRef = useRef<number | null>(
-    (() => {
-      const loaded = loadState();
-      return loaded ? loaded.pauseTimestamp : null;
-    })()
-  );
+  const pauseStartRef = useRef<number | null>(null);
+  const restoredRef = useRef(false);
+
+  // Restore from IndexedDB on mount (async)
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+
+    db.compressed
+      .get(STORAGE_KEY)
+      .then((record) => {
+        if (!record) return;
+        try {
+          const json = decompressFromUTF16(record.value);
+          if (!json) return;
+          const persisted: PersistedTimerState = JSON.parse(json);
+          const result = resolvePersistedState(persisted);
+          if (result) {
+            setState(result.state);
+            pauseStartRef.current = result.pauseTimestamp;
+          }
+        } catch { /* ignore corrupt data */ }
+      })
+      .catch(() => { /* ignore */ });
+  }, []);
 
   // Persist on every state change
   useEffect(() => {
