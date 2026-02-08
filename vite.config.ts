@@ -18,6 +18,10 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      // Do NOT use skipWaiting/clientsClaim at the plugin level —
+      // the autoUpdate register handles activation gracefully without
+      // triggering "Clear Site Data" which would wipe IndexedDB.
+      selfDestroying: false,
       includeAssets: ["favicon.ico", "og-image.png", "placeholder.svg", "robots.txt"],
       manifest: {
         name: "Study Tracker",
@@ -48,7 +52,12 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        // Never inject skipWaiting/clientsClaim into the generated SW
+        skipWaiting: false,
+        clientsClaim: false,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        // Ensure navigations fall back to index.html for SPA routing
+        navigateFallback: "index.html",
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
