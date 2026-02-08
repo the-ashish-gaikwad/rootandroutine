@@ -11,12 +11,17 @@ class StudyTrackerDB extends Dexie {
   compressed!: Table<CompressedRecord, string>;
 
   constructor() {
-    super('study-tracker-db');
+    // Hardcoded, stable database name — never changes between builds
+    super('StudyAppDB');
 
+    // Version 1: initial schema
     this.version(1).stores({
-      // 'key' is the primary key; updatedAt for potential cleanup queries
       compressed: 'key, updatedAt',
     });
+
+    // Future schema changes: add new versions here, never delete the old ones.
+    // Example:
+    // this.version(2).stores({ compressed: 'key, updatedAt, category' });
   }
 }
 
