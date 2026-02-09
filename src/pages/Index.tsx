@@ -25,7 +25,9 @@ import { ChartControls } from '@/components/ChartControls';
    AlertDialogTitle,
    AlertDialogTrigger,
  } from '@/components/ui/alert-dialog';
- import { Download, Trash2, Smartphone } from 'lucide-react';
+import { Download, Trash2, Smartphone } from 'lucide-react';
+import { FeedbackDialog } from '@/components/FeedbackDialog';
+import { trackEvent } from '@/lib/analytics';
 
 const Index = () => {
   const {
@@ -58,6 +60,7 @@ const Index = () => {
   // Handle timer start
   const handleTimerStart = (subjectId: string) => {
     timer.start(subjectId);
+    trackEvent('timer_start');
     toast({
       title: 'Timer started',
       description: `Studying ${subjects.find(s => s.id === subjectId)?.name}`
@@ -188,6 +191,7 @@ const Index = () => {
         <div className="container max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p>Your data is stored locally in your browser.</p>
           <div className="flex gap-2">
+            <FeedbackDialog />
             {canInstall && (
               <Button variant="ghost" size="sm" onClick={install} className="gap-1.5 h-8 text-muted-foreground hover:text-foreground">
                 <Smartphone className="w-3.5 h-3.5" />

@@ -60,8 +60,13 @@ export function useCompressedStorage<T>(
         db.compressed
           .put({ key, value: compressed, updatedAt: Date.now() })
           .catch((err) => console.warn(`Error writing IndexedDB key "${key}":`, err));
-      } catch (error) {
+      } catch (error: any) {
         console.warn(`Error serializing data for "${key}":`, error);
+        if (error?.name === 'QuotaExceededError') {
+          import('@/lib/errorLogger').then(({ logError }) =>
+            logError(error, 'IndexedDB:QuotaExceeded')
+          );
+        }
       }
     },
     [key]
