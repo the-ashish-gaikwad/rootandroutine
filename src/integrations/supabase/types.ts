@@ -14,7 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      error_logs: {
+        Row: {
+          app_version: string | null
+          context: string | null
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          id: string
+        }
+        Insert: {
+          app_version?: string | null
+          context?: string | null
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          id?: string
+        }
+        Update: {
+          app_version?: string | null
+          context?: string | null
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      feedback: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          id: string
+          message: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
