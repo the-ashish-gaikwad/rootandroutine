@@ -1,26 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
-const ADMIN_PASS = 'r00t&r0utine!';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Admin() {
   const [authed, setAuthed] = useState(false);
   const [pass, setPass] = useState('');
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<any[]>([]);
   const [feedbacks, setFeedbacks] = useState<any[]>([]);
+  const { toast } = useToast();
 
-  useEffect(() => {
-    if (!authed) return;
-    // These will fail with RLS if not using service role, but we try anyway
-    // In production, use an edge function with service role
-    supabase.from('error_logs').select('*').order('created_at', { ascending: false }).limit(20)
-      .then(({ data }) => setErrors(data ?? []));
-    supabase.from('feedback').select('*').order('created_at', { ascending: false }).limit(20)
-      .then(({ data }) => setFeedbacks(data ?? []));
-  }, [authed]);
+  const handleLogin = async () => {
+    if (!pass.trim()) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-data', {
+        body: { password: pass },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast({ title: 'Access denied', variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
+      setErrors(data.errors ?? []);
+      setFeedbacks(data.feedbacks ?? []);
+      setAuthed(true);
+    } catch {
+      toast({ title: 'Access denied', variant: 'destructive' });
+    }
+    setLoading(false);
+  };
 
   if (!authed) {
     return (
@@ -28,8 +41,10 @@ export default function Admin() {
         <Card className="w-full max-w-sm">
           <CardHeader><CardTitle>Admin Access</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <Input type="password" placeholder="Password" value={pass} onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && pass === ADMIN_PASS && setAuthed(true)} />
-            <Button className="w-full" onClick={() => pass === ADMIN_PASS && setAuthed(true)}>Enter</Button>
+            <Input type="password" placeholder="Password" value={pass} onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()} />
+            <Button className="w-full" onClick={handleLogin} disabled={loading}>
+              {loading ? 'Verifying…' : 'Enter'}
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -44,7 +59,7 @@ export default function Admin() {
         <CardHeader><CardTitle>Recent Errors ({errors.length})</CardTitle></CardHeader>
         <CardContent className="space-y-2 max-h-96 overflow-y-auto">
           {errors.length === 0 && <p className="text-muted-foreground text-sm">No errors logged yet.</p>}
-          {errors.map((e) => (
+          {errors.map((e: any) => (
             <div key={e.id} className="border rounded p-2 text-xs space-y-1">
               <div className="font-medium text-destructive">{e.error_message}</div>
               <div className="text-muted-foreground">{e.context} · v{e.app_version} · {new Date(e.created_at).toLocaleString()}</div>
@@ -57,7 +72,7 @@ export default function Admin() {
         <CardHeader><CardTitle>Recent Feedback ({feedbacks.length})</CardTitle></CardHeader>
         <CardContent className="space-y-2 max-h-96 overflow-y-auto">
           {feedbacks.length === 0 && <p className="text-muted-foreground text-sm">No feedback yet.</p>}
-          {feedbacks.map((f) => (
+          {feedbacks.map((f: any) => (
             <div key={f.id} className="border rounded p-2 text-xs space-y-1">
               <div>{f.message}</div>
               <div className="text-muted-foreground">v{f.app_version} · {new Date(f.created_at).toLocaleString()}</div>
